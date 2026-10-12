@@ -260,6 +260,7 @@
     "appToken": "앱 토큰",
     "accessToken": "액세스 토큰",
     "allowFrom": "허용된 사용자",
+    "allowGroups": "허용된 그룹",
     "groupAllowFrom": "Allowed groups, teams, or channels",
     "groupPolicy": "Group policy",
     "requireMention": "Require explicit mention",

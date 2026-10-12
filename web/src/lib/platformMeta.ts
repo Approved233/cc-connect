@@ -74,6 +74,8 @@ export const platformMeta: Record<string, PlatformMeta> = {
       { key: 'ws_url', labelKey: 'fields.wsUrl', required: true, placeholder: 'ws://127.0.0.1:3001' },
       { key: 'token', labelKey: 'fields.accessToken', type: 'password', group: 'advanced' },
       { key: 'allow_from', labelKey: 'fields.allowFrom', placeholder: '* (all)', group: 'advanced' },
+      { key: 'allow_groups', labelKey: 'fields.allowGroups', placeholder: '* (all)', group: 'advanced' },
+      { key: 'mention_only', labelKey: 'fields.requireMention', type: 'boolean', group: 'advanced' },
       { key: 'share_session_in_channel', labelKey: 'fields.sharedGroupSession', type: 'boolean', group: 'advanced' },
     ],
   },

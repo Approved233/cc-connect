@@ -260,6 +260,7 @@
     "appToken": "App Token",
     "accessToken": "Access Token",
     "allowFrom": "Allowed users",
+    "allowGroups": "Allowed groups",
     "groupAllowFrom": "Allowed groups, teams, or channels",
     "groupPolicy": "Group policy",
     "requireMention": "Require explicit mention",

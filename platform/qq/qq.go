@@ -31,6 +31,8 @@ type Platform struct {
 	token                 string // optional access_token
 	allowFrom             string // comma-separated user IDs or "*"
 	shareSessionInChannel bool
+	mentionOnly           bool           // group messages must @mention the bot
+	allowGroups           map[int64]bool // nil = all groups allowed
 	handler               core.MessageHandler
 	conn                  *websocket.Conn
 	mu                    sync.Mutex
@@ -40,7 +42,7 @@ type Platform struct {
 	selfID                int64
 	dedup                 core.MessageDedup
 	groupNameCache        sync.Map // groupID -> group name
-	httpURL            string   // OneBot HTTP API URL, e.g. "http://127.0.0.1:3000"
+	httpURL               string   // OneBot HTTP API URL, e.g. "http://127.0.0.1:3000"
 }
 
 func New(opts map[string]any) (core.Platform, error) {
@@ -51,8 +53,14 @@ func New(opts map[string]any) (core.Platform, error) {
 	token, _ := opts["token"].(string)
 	allowFrom, _ := opts["allow_from"].(string)
 	shareSessionInChannel, _ := opts["share_session_in_channel"].(bool)
+	mentionOnly, _ := opts["mention_only"].(bool)
 
 	core.CheckAllowFrom("qq", allowFrom)
+
+	allowGroups, err := parseAllowGroups(opts["allow_groups"])
+	if err != nil {
+		return nil, err
+	}
 
 	httpURL, _ := opts["http_url"].(string)
 	httpURL = strings.TrimRight(httpURL, "/")
@@ -62,7 +70,9 @@ func New(opts map[string]any) (core.Platform, error) {
 		token:                 token,
 		allowFrom:             allowFrom,
 		shareSessionInChannel: shareSessionInChannel,
-		httpURL:            httpURL,
+		mentionOnly:           mentionOnly,
+		allowGroups:           allowGroups,
+		httpURL:               httpURL,
 	}, nil
 }
 
@@ -194,6 +204,24 @@ func (p *Platform) handleMessage(payload map[string]any) {
 
 	if !p.isAllowed(userID) {
 		return
+	}
+
+	if msgType == "group" {
+		if !p.isGroupAllowed(groupID) {
+			slog.Debug("qq: group not in allow_groups, ignoring", "group_id", groupID)
+			return
+		}
+		if p.mentionOnly {
+			selfID := p.selfID
+			if selfID == 0 {
+				// get_login_info may have failed; OneBot events carry self_id.
+				selfID = jsonInt64(payload, "self_id")
+			}
+			if !isMentioned(payload, selfID) {
+				slog.Debug("qq: group message without @bot ignored (mention_only)", "group_id", groupID)
+				return
+			}
+		}
 	}
 
 	// Extract sender info
@@ -672,6 +700,129 @@ func (p *Platform) isAllowed(userID int64) bool {
 		}
 	}
 	return false
+}
+
+func (p *Platform) isGroupAllowed(groupID int64) bool {
+	if p.allowGroups == nil {
+		return true
+	}
+	return p.allowGroups[groupID]
+}
+
+// parseAllowGroups accepts a comma-separated string ("123,456"), "*" / "" for
+// all groups, or a TOML array of strings/integers. Returns nil when all
+// groups are allowed.
+func parseAllowGroups(v any) (map[int64]bool, error) {
+	var items []string
+	switch t := v.(type) {
+	case nil:
+		return nil, nil
+	case string:
+		items = strings.Split(t, ",")
+	case []any:
+		for _, it := range t {
+			switch x := it.(type) {
+			case string:
+				items = append(items, x)
+			case int64:
+				items = append(items, strconv.FormatInt(x, 10))
+			case int:
+				items = append(items, strconv.Itoa(x))
+			case float64:
+				items = append(items, strconv.FormatInt(int64(x), 10))
+			default:
+				return nil, fmt.Errorf("qq: allow_groups: unsupported element type %T", it)
+			}
+		}
+	case []string:
+		items = t
+	default:
+		return nil, fmt.Errorf("qq: allow_groups: unsupported type %T", v)
+	}
+
+	groups := make(map[int64]bool)
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		if item == "*" {
+			return nil, nil
+		}
+		gid, err := strconv.ParseInt(item, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("qq: allow_groups: invalid group ID %q: %w", item, err)
+		}
+		groups[gid] = true
+	}
+	if len(groups) == 0 {
+		return nil, nil
+	}
+	return groups, nil
+}
+
+// isMentioned reports whether a OneBot message event @mentions selfID,
+// either via an "at" segment in the message array or a [CQ:at,qq=...] code
+// in the string form.
+func isMentioned(payload map[string]any, selfID int64) bool {
+	if selfID == 0 {
+		return false
+	}
+	self := strconv.FormatInt(selfID, 10)
+	switch msg := payload["message"].(type) {
+	case []any:
+		for _, seg := range msg {
+			s, ok := seg.(map[string]any)
+			if !ok {
+				continue
+			}
+			if t, _ := s["type"].(string); t != "at" {
+				continue
+			}
+			data, _ := s["data"].(map[string]any)
+			switch qq := data["qq"].(type) {
+			case string:
+				if strings.TrimSpace(qq) == self {
+					return true
+				}
+			case float64:
+				if int64(qq) == selfID {
+					return true
+				}
+			case json.Number:
+				if qq.String() == self {
+					return true
+				}
+			}
+		}
+		return false
+	case string:
+		return containsCQAt(msg, self)
+	}
+	if raw, ok := payload["raw_message"].(string); ok {
+		return containsCQAt(raw, self)
+	}
+	return false
+}
+
+func containsCQAt(s, self string) bool {
+	for {
+		idx := strings.Index(s, "[CQ:at,")
+		if idx < 0 {
+			return false
+		}
+		s = s[idx+len("[CQ:at,"):]
+		end := strings.Index(s, "]")
+		if end < 0 {
+			return false
+		}
+		for _, kv := range strings.Split(s[:end], ",") {
+			if k, v, ok := strings.Cut(kv, "="); ok && k == "qq" && v == self {
+				return true
+			}
+		}
+		s = s[end+1:]
+	}
 }
 
 func jsonInt64(m map[string]any, key string) int64 {

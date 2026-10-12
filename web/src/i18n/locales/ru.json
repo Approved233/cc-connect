@@ -252,6 +252,7 @@
     "appToken": "Токен приложения",
     "accessToken": "Токен доступа",
     "allowFrom": "Разрешённые пользователи",
+    "allowGroups": "Разрешённые группы",
     "groupAllowFrom": "Allowed groups, teams, or channels",
     "groupPolicy": "Group policy",
     "requireMention": "Require explicit mention",

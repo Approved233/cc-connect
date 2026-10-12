@@ -260,6 +260,7 @@
     "appToken": "App Token",
     "accessToken": "访问令牌",
     "allowFrom": "允许的用户",
+    "allowGroups": "允许的群",
     "groupAllowFrom": "允许的群、团队或频道",
     "groupPolicy": "群聊策略",
     "requireMention": "要求明确 @机器人",

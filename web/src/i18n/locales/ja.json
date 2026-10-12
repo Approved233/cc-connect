@@ -260,6 +260,7 @@
     "appToken": "アプリトークン",
     "accessToken": "アクセストークン",
     "allowFrom": "許可ユーザー",
+    "allowGroups": "許可グループ",
     "groupAllowFrom": "許可するグループ、チーム、チャンネル",
     "groupPolicy": "グループポリシー",
     "requireMention": "明示的なメンションを必須にする",

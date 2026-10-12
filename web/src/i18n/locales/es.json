@@ -260,6 +260,7 @@
     "appToken": "Token de la app",
     "accessToken": "Token de acceso",
     "allowFrom": "Usuarios permitidos",
+    "allowGroups": "Grupos permitidos",
     "groupAllowFrom": "Grupos, equipos o canales permitidos",
     "groupPolicy": "Politica de grupos",
     "requireMention": "Requerir mencion explicita",

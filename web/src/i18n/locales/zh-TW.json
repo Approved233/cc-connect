@@ -260,6 +260,7 @@
     "appToken": "App Token",
     "accessToken": "存取權杖",
     "allowFrom": "允許的使用者",
+    "allowGroups": "允許的群組",
     "groupAllowFrom": "允許的群組、團隊或頻道",
     "groupPolicy": "群組策略",
     "requireMention": "要求明確 @機器人",

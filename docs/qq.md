@@ -71,6 +71,17 @@ allow_from = "*"                 # 允许交互的 QQ 号，"*" 表示所有人
 - `"12345"` — 仅允许 QQ 号 12345 / Only allow QQ user 12345
 - `"12345,67890"` — 允许多个 QQ 号 / Allow multiple QQ users
 
+**群聊过滤 / Group filtering (optional):**
+
+```toml
+mention_only = true              # 群聊中仅在 @机器人 时响应 / Only respond in groups when @mentioned
+allow_groups = "11111,22222"     # 仅响应这些群，"*" 或留空表示所有群 / Only respond in these groups ("*" or empty = all)
+```
+
+- `mention_only` 只影响群聊，私聊始终响应 / Only applies to group chats; private chats are always handled.
+- `allow_groups` 也可写成数组 / Also accepts an array: `allow_groups = [11111, 22222]`。
+- `allow_from` 与 `allow_groups` 同时生效：群消息需同时满足两者 / Both `allow_from` and `allow_groups` apply to group messages.
+
 ### 4. 启动 / Start
 
 ```bash
@@ -92,6 +103,10 @@ Now you can chat with the bot via QQ private or group messages!
 支持群聊消息。在群中发送消息时，机器人会以独立的会话（按用户区分）处理每个人的请求。
 
 Group chat is supported. Each user gets their own independent session, even in group chats.
+
+如需机器人只在被 @ 时回复，或只在指定群内工作，请配置 `mention_only` / `allow_groups`（见上文）。
+
+To make the bot reply only when @mentioned, or only in specific groups, set `mention_only` / `allow_groups` (see above).
 
 ## 支持的消息类型 / Supported Message Types
 

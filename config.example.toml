@@ -1801,6 +1801,10 @@ app_secret = "your-feishu-app-secret"
 # allow_from = "*"                 # allowed QQ user IDs, e.g. "12345,67890" or "*" for all
 #                                  # 允许的 QQ 号，如 "12345,67890"，"*" 表示所有
 # share_session_in_channel = false  # If true, all users in a group share one agent session / 群聊共享会话
+# mention_only = false             # If true, only respond in groups when the bot is @mentioned (private chats unaffected)
+#                                  # 为 true 时，群聊中仅在 @机器人 时响应（私聊不受影响）
+# allow_groups = "*"               # allowed QQ group IDs, e.g. "11111,22222" or "*" / empty for all groups
+#                                  # 允许响应的群号，如 "11111,22222"，"*" 或留空表示所有群
 
 # QQ Bot (Official / 官方 QQ 机器人) (uncomment to enable / 取消注释以启用)
 # Uses the official QQ Bot Platform API — no third-party adapter needed.
